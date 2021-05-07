@@ -6,10 +6,9 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(Grid))]
 public class AStarGrid : MonoBehaviour
 {
-
     private Node[,] grid;
     public BoundsInt gridWorldSize;
-    public Vector2 nodeRadius;
+    public Vector2 nodeSize;
     public LayerMask collisionMask;
 
     public Grid tilemapGrid;
@@ -17,28 +16,43 @@ public class AStarGrid : MonoBehaviour
 
     private void Start() {
         tilemapGrid = GetComponent<Grid>();
-        nodeRadius.x = collisionMap.cellSize.x;
-        nodeRadius.y = collisionMap.cellSize.y;
+        nodeSize.x = collisionMap.cellSize.x;
+        nodeSize.y = collisionMap.cellSize.y;
         gridWorldSize = collisionMap.cellBounds;
         CreateGrid();
     }
-
-    private void OnDrawGizmos() {
-        Gizmos.DrawWireCube(transform.position,new Vector2(gridWorldSize.x,gridWorldSize.y));    
-    }
-
-
     private void CreateGrid(){
         grid = new Node[gridWorldSize.size.x,gridWorldSize.size.y];
-        
-        //Test with bounds after
-        Vector2 worldBottomLeft = transform.position - Vector3.right*gridWorldSize.size.x/2 - Vector3.up * gridWorldSize.size.y/2;
-          
+
+        Vector2 worldBottomLeft = new Vector2(gridWorldSize.xMin,gridWorldSize.yMin);
+
         for(int x = 0; x<gridWorldSize.size.x;x++){
             for(int y = 0; y<gridWorldSize.size.y;y++){
+                
+                Vector2 worldPoint = worldBottomLeft + Vector2.right * (x*nodeSize.x+(nodeSize.x/2)) + Vector2.up * (y*nodeSize.y+(nodeSize.y/2));
+                print(worldPoint);
+                grid[x,y] = new Node(false, worldPoint,x,y);
+                
+                if(!(collisionMap.HasTile(collisionMap.WorldToCell(grid[x,y].worldPosition)))){
+                    grid[x,y].walkable = true;
+                }
 
             }
         }
+    }
 
+    public Node NodeFromWorldPosition(Vector2 worldPos){
+        int x = Mathf.RoundToInt(worldPos.x - 1 + (gridWorldSize.size.x / 2));
+        int y = Mathf.RoundToInt(worldPos.y + (gridWorldSize.size.y / 2));
+        return grid[x,y];
+    }
+    private void OnDrawGizmos() {
+        Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.size.x,gridWorldSize.size.y,0));
+        if(grid != null){
+            foreach (Node n in grid){
+                Gizmos.color = (n.walkable)? Color.white:Color.red;
+                Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
+            }
+        }    
     }
 }

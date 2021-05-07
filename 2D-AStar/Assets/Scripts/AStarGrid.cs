@@ -41,16 +41,42 @@ public class AStarGrid : MonoBehaviour
         }
     }
 
+    public List<Node> GetNeighbors(Node node){
+        List<Node> neighbors = new List<Node>();
+
+        for(int x = -1;x<= 1;x++){
+            for(int y = -1;y<=1;y++){
+                if(x==0 && y==0){
+                    continue;
+                }
+                int xNeighbor = node.gridPosX + x;
+                int yNeighbor = node.gridPosY + y;
+                if((xNeighbor >= 0 && xNeighbor < gridWorldSize.size.x) && 
+                    (yNeighbor >= 0 && yNeighbor < gridWorldSize.size.y)){
+                    neighbors.Add(grid[xNeighbor,yNeighbor]);
+                }
+            }
+        }
+        return neighbors;
+    }
+    
     public Node NodeFromWorldPosition(Vector2 worldPos){
         int x = Mathf.RoundToInt(worldPos.x - 1 + (gridWorldSize.size.x / 2));
         int y = Mathf.RoundToInt(worldPos.y + (gridWorldSize.size.y / 2));
         return grid[x,y];
     }
+
+    public List<Node> path;
     private void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.size.x,gridWorldSize.size.y,0));
         if(grid != null){
             foreach (Node n in grid){
                 Gizmos.color = (n.walkable)? Color.white:Color.red;
+                if(path!=null){
+                    if(path.Contains(n)){
+                        Gizmos.color = Color.blue;
+                    }
+                }
                 Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
             }
         }    

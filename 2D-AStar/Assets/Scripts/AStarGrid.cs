@@ -14,6 +14,7 @@ public class AStarGrid : MonoBehaviour
     public Grid tilemapGrid;
     public Tilemap collisionMap;
 
+    public bool onlyDisplayPath = true;
     private void Start() {
         tilemapGrid = GetComponent<Grid>();
         nodeSize.x = collisionMap.cellSize.x;
@@ -23,14 +24,15 @@ public class AStarGrid : MonoBehaviour
     }
     private void CreateGrid(){
         grid = new Node[gridWorldSize.size.x,gridWorldSize.size.y];
-
+        print("WORLD SIZE X: "+ gridWorldSize.size.x);
+        print("WORLD SIZE Y: "+ gridWorldSize.size.y);
         Vector2 worldBottomLeft = new Vector2(gridWorldSize.xMin,gridWorldSize.yMin);
 
         for(int x = 0; x<gridWorldSize.size.x;x++){
             for(int y = 0; y<gridWorldSize.size.y;y++){
                 
                 Vector2 worldPoint = worldBottomLeft + Vector2.right * (x*nodeSize.x+(nodeSize.x/2)) + Vector2.up * (y*nodeSize.y+(nodeSize.y/2));
-                print(worldPoint);
+                //print(worldPoint);
                 grid[x,y] = new Node(false, worldPoint,x,y);
                 
                 if(!(collisionMap.HasTile(collisionMap.WorldToCell(grid[x,y].worldPosition)))){
@@ -66,19 +68,36 @@ public class AStarGrid : MonoBehaviour
         return grid[x,y];
     }
 
+    public int MaxSize{
+        get{
+            return gridWorldSize.size.x * gridWorldSize.size.y;
+        }
+    }
+
     public List<Node> path;
     private void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.size.x,gridWorldSize.size.y,0));
-        if(grid != null){
-            foreach (Node n in grid){
-                Gizmos.color = (n.walkable)? Color.white:Color.red;
-                if(path!=null){
-                    if(path.Contains(n)){
-                        Gizmos.color = Color.blue;
-                    }
+        if(onlyDisplayPath){
+            if(path!=null){
+                foreach(Node n in path){
+                    Gizmos.color = Color.blue;
+                    Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
                 }
-                Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
             }
-        }    
+        }else{
+            if(grid != null){
+                foreach (Node n in grid){
+                    Gizmos.color = (n.walkable)? Color.white:Color.red;
+                    if(path!=null){
+                        if(path.Contains(n)){
+                            Gizmos.color = Color.blue;
+                        }
+                    }
+                    Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
+                }
+            }
+        }
+        
+            
     }
 }

@@ -14,8 +14,8 @@ public class AStarGrid : MonoBehaviour
     public Grid tilemapGrid;
     public Tilemap collisionMap;
 
-    public bool onlyDisplayPath = true;
-    private void Start() {
+    public bool displayGridGizmos = false;
+    private void Awake() {
         tilemapGrid = GetComponent<Grid>();
         nodeSize.x = collisionMap.cellSize.x;
         nodeSize.y = collisionMap.cellSize.y;
@@ -24,8 +24,6 @@ public class AStarGrid : MonoBehaviour
     }
     private void CreateGrid(){
         grid = new Node[gridWorldSize.size.x,gridWorldSize.size.y];
-        print("WORLD SIZE X: "+ gridWorldSize.size.x);
-        print("WORLD SIZE Y: "+ gridWorldSize.size.y);
         Vector2 worldBottomLeft = new Vector2(gridWorldSize.xMin,gridWorldSize.yMin);
 
         for(int x = 0; x<gridWorldSize.size.x;x++){
@@ -73,31 +71,13 @@ public class AStarGrid : MonoBehaviour
             return gridWorldSize.size.x * gridWorldSize.size.y;
         }
     }
-
-    public List<Node> path;
     private void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.size.x,gridWorldSize.size.y,0));
-        if(onlyDisplayPath){
-            if(path!=null){
-                foreach(Node n in path){
-                    Gizmos.color = Color.blue;
-                    Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
-                }
-            }
-        }else{
-            if(grid != null){
-                foreach (Node n in grid){
-                    Gizmos.color = (n.walkable)? Color.white:Color.red;
-                    if(path!=null){
-                        if(path.Contains(n)){
-                            Gizmos.color = Color.blue;
-                        }
-                    }
-                    Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
-                }
+        if(grid != null && displayGridGizmos){
+            foreach (Node n in grid){
+                Gizmos.color = (n.walkable)? Color.white:Color.red;
+                Gizmos.DrawCube(n.worldPosition,Vector3.one*(nodeSize.x-0.1f));
             }
         }
-        
-            
     }
 }

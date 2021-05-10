@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Node : IHeapItem<Node>
 {
-    #region Pathfinding
+    #region Pathfinding Base
     public bool walkable;
     public Vector2 worldPosition;
     public int gridPosX,gridPosY;
@@ -14,13 +14,24 @@ public class Node : IHeapItem<Node>
     #region Heap
     private int heapIndex;
     #endregion
+    #region Weights
+    public int movementPenalty;
+    #endregion
 
     public Node(bool walkable, Vector2 worldPosition, int gridPosX, int gridPosY){
         this.walkable = walkable;
         this.worldPosition = worldPosition;
         this.gridPosX = gridPosX;
         this.gridPosY = gridPosY;
+        this.movementPenalty = 0;
 
+    }
+    public Node(bool walkable, Vector2 worldPosition, int gridPosX, int gridPosY, int movementPenalty){
+        this.walkable = walkable;
+        this.worldPosition = worldPosition;
+        this.gridPosX = gridPosX;
+        this.gridPosY = gridPosY;
+        this.movementPenalty = movementPenalty;
     }
 
     public int fCost{

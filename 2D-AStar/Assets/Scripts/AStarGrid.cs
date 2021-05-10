@@ -6,6 +6,7 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(Grid))]
 public class AStarGrid : MonoBehaviour
 {
+    #region Basic pathfinding
     private Node[,] grid;
     public BoundsInt gridWorldSize;
     public Vector2 nodeSize;
@@ -13,6 +14,18 @@ public class AStarGrid : MonoBehaviour
 
     public Grid tilemapGrid;
     public Tilemap collisionMap;
+    #endregion
+    #region Weights
+    public bool enableWeightedPaths;
+    
+    /* Enable if your game is of the topdown view. This will change the orientation of the racast to cast
+     * into the screen rather than downwards.  
+     */
+    public bool isTopdown;  
+    public TerrainType[] walkableRegions;
+    private LayerMask walkableLayers;
+    Dictionary<int,int> walkableRegionsDict = new Dictionary<int, int>();
+    #endregion
 
     public bool displayGridGizmos = false;
     private void Awake() {
@@ -20,6 +33,12 @@ public class AStarGrid : MonoBehaviour
         nodeSize.x = collisionMap.cellSize.x;
         nodeSize.y = collisionMap.cellSize.y;
         gridWorldSize = collisionMap.cellBounds;
+        if(enableWeightedPaths){
+            foreach(TerrainType region in walkableRegions){
+                walkableLayers.value |= region.terrainMask.value;
+                walkableRegionsDict.Add((int)Mathf.Log(region.terrainMask.value,2.0f),region.terrainPenalty);
+            }
+        }
         CreateGrid();
     }
     private void CreateGrid(){
@@ -28,19 +47,27 @@ public class AStarGrid : MonoBehaviour
 
         for(int x = 0; x<gridWorldSize.size.x;x++){
             for(int y = 0; y<gridWorldSize.size.y;y++){
+                Vector2 worldPosition = worldBottomLeft + Vector2.right * (x*nodeSize.x+(nodeSize.x/2)) + Vector2.up * (y*nodeSize.y+(nodeSize.y/2));
+                grid[x,y] = new Node(false, worldPosition,x,y,0);
                 
-                Vector2 worldPoint = worldBottomLeft + Vector2.right * (x*nodeSize.x+(nodeSize.x/2)) + Vector2.up * (y*nodeSize.y+(nodeSize.y/2));
-                //print(worldPoint);
-                grid[x,y] = new Node(false, worldPoint,x,y);
-                
-                if(!(collisionMap.HasTile(collisionMap.WorldToCell(grid[x,y].worldPosition)))){
+                if(!(collisionMap.HasTile(collisionMap.WorldToCell(worldPosition)))){
                     grid[x,y].walkable = true;
                 }
-
+                int movementPenalty = 0;
+                
+                if(grid[x,y].walkable && enableWeightedPaths){
+                   Ray ray = (isTopdown)? new Ray(new Vector3(worldPosition.x,worldPosition.y,5),Vector3.back):new Ray(new Vector3(worldPosition.x,worldPosition.y,0),Vector3.down);
+                   Debug.DrawRay(new Vector3(worldPosition.x,worldPosition.y,5),Vector3.back);
+                   RaycastHit hit;
+                   if(Physics.Raycast(ray,out hit, 10, walkableLayers)){
+                       walkableRegionsDict.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
+                       grid[x,y].movementPenalty = movementPenalty;
+                   }
+                }
+                
             }
         }
     }
-
     public List<Node> GetNeighbors(Node node){
         List<Node> neighbors = new List<Node>();
 
@@ -71,6 +98,7 @@ public class AStarGrid : MonoBehaviour
             return gridWorldSize.size.x * gridWorldSize.size.y;
         }
     }
+    
     private void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.size.x,gridWorldSize.size.y,0));
         if(grid != null && displayGridGizmos){
@@ -80,4 +108,9 @@ public class AStarGrid : MonoBehaviour
             }
         }
     }
+}
+[System.Serializable]
+public class TerrainType{
+    public LayerMask terrainMask;
+    public int terrainPenalty;
 }
